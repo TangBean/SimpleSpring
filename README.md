@@ -63,7 +63,7 @@ IoC (Inversion of Control)，即控制反转，或者称其为依赖注入更好
     <version>1.1.6</version>
 </dependency>
 
-<!-- 通过字符串类名创建对应类的对象并且注入响应属性要用到的包 -->
+<!-- 通过字符串类名创建对应类的对象并且为对象注入属性要用到的包 -->
 <dependency>
     <groupId>commons-beanutils</groupId>
     <artifactId>commons-beanutils</artifactId>
