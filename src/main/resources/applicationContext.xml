@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans>
+
+    <bean name="A" class="org.simplespring.model.A">
+        <property name="strData" value="A的strData"/>
+        <property name="intData" value="123"/>
+    </bean>
+
+    <bean name="B" class="org.simplespring.model.B">
+        <property name="refData" ref="A"/>
+    </bean>
+
+    <bean name="C" class="org.simplespring.model.C" scope="prototype">
+        <property name="strData" value="C的strData"/>
+    </bean>
+
+</beans>
