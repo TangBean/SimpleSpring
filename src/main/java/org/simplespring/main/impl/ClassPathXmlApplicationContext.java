@@ -6,6 +6,7 @@ import org.simplespring.config.Property;
 import org.simplespring.config.parse.ConfigManager;
 import org.simplespring.main.BeanFactory;
 
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,9 @@ public class ClassPathXmlApplicationContext implements BeanFactory {
     private Object createBean(Bean beanInfo) {
         Object object = null;
         try {
-            // 创建对象
             Class beanClass = Class.forName(beanInfo.getClassName());
-            object = beanClass.newInstance();
+            // 创建对象
+            newObject(beanInfo, beanClass);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("配置文件中的bean初始化异常");
@@ -67,6 +68,39 @@ public class ClassPathXmlApplicationContext implements BeanFactory {
             }
         }
         return object;
+    }
+
+    /**
+     * 执行合适的构造函数
+     * @param beanInfo
+     * @param beanClass
+     * @return
+     */
+    public Object newObject(Bean beanInfo, Class beanClass) throws IllegalAccessException, InstantiationException {
+        if (beanInfo.getIndexConstructorArgs().isEmpty() && beanInfo.getGenericConstructorArgs().isEmpty()) {
+            return beanClass.newInstance();
+        }
+
+        Constructor<?> constructorToUse = null;
+        Object[] argsToUse = null;
+        Constructor<?>[] constructors = beanClass.getConstructors();
+        // todo: 构造函数排序
+
+        int paramNum = beanInfo.getIndexConstructorArgs().size() + beanInfo.getGenericConstructorArgs().size();
+
+        for (Constructor<?> constructor : constructors) {
+            Class<?>[] paramTypes = constructor.getParameterTypes();
+            if (argsToUse != null && argsToUse.length > paramTypes.length) {
+                break;
+            }
+            if (paramTypes.length < paramNum) {
+                continue;
+            }
+
+
+
+        }
+        return null;
     }
 
     @Override

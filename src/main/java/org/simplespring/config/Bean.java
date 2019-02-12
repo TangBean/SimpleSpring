@@ -1,7 +1,9 @@
 package org.simplespring.config;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Bean {
     private String name;
@@ -10,7 +12,11 @@ public class Bean {
 
     private String scope = "singleton";
 
-    List<Property> properties = new ArrayList<>();
+    private final Map<Integer, ConstructorArg> indexConstructorArgs = new HashMap<>();
+
+    private final List<ConstructorArg> genericConstructorArgs = new ArrayList<>();
+
+    private final List<Property> properties = new ArrayList<>();
 
     @Override
     public String toString() {
@@ -18,16 +24,22 @@ public class Bean {
                 "name='" + name + '\'' +
                 ", className='" + className + '\'' +
                 ", scope='" + scope + '\'' +
+                ", indexConstructorArgs=" + indexConstructorArgs +
+                ", genericConstructorArgs=" + genericConstructorArgs +
                 ", properties=" + properties +
                 '}';
     }
 
-    public List<Property> getProperties() {
-        return properties;
+    public Map<Integer, ConstructorArg> getIndexConstructorArgs() {
+        return indexConstructorArgs;
     }
 
-    public void setProperties(List<Property> properties) {
-        this.properties = properties;
+    public List<ConstructorArg> getGenericConstructorArgs() {
+        return genericConstructorArgs;
+    }
+
+    public List<Property> getProperties() {
+        return properties;
     }
 
     public String getName() {
