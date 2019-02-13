@@ -5,8 +5,10 @@ import org.simplespring.config.Bean;
 import org.simplespring.config.Property;
 import org.simplespring.config.parse.ConfigManager;
 import org.simplespring.main.BeanFactory;
+import org.simplespring.support.ConstructorResolver;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,10 +33,16 @@ public class ClassPathXmlApplicationContext implements BeanFactory {
 
     private Object createBean(Bean beanInfo) {
         Object object = null;
+        // 判断该实例是否已经创建
+        object = beanMap.get(beanInfo.getName());
+        if (object != null) {
+            return object;
+        }
+
         try {
             Class beanClass = Class.forName(beanInfo.getClassName());
             // 创建对象
-            newObject(beanInfo, beanClass);
+            object = newObject(beanInfo, beanClass);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("配置文件中的bean初始化异常");
@@ -76,31 +84,16 @@ public class ClassPathXmlApplicationContext implements BeanFactory {
      * @param beanClass
      * @return
      */
-    public Object newObject(Bean beanInfo, Class beanClass) throws IllegalAccessException, InstantiationException {
+    public Object newObject(Bean beanInfo, Class beanClass) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         if (beanInfo.getIndexConstructorArgs().isEmpty() && beanInfo.getGenericConstructorArgs().isEmpty()) {
             return beanClass.newInstance();
         }
 
-        Constructor<?> constructorToUse = null;
-        Object[] argsToUse = null;
-        Constructor<?>[] constructors = beanClass.getConstructors();
-        // todo: 构造函数排序
-
-        int paramNum = beanInfo.getIndexConstructorArgs().size() + beanInfo.getGenericConstructorArgs().size();
-
-        for (Constructor<?> constructor : constructors) {
-            Class<?>[] paramTypes = constructor.getParameterTypes();
-            if (argsToUse != null && argsToUse.length > paramTypes.length) {
-                break;
-            }
-            if (paramTypes.length < paramNum) {
-                continue;
-            }
-
-
-
-        }
-        return null;
+        ConstructorResolver.ArgumentsHolder matchedConstructor =
+                ConstructorResolver.matchConstructor(beanInfo, beanClass, this);
+        Constructor<?> constructor = matchedConstructor.getConstructor();
+        Object[] paramArgs = matchedConstructor.getArguments();
+        return constructor.newInstance(paramArgs);
     }
 
     @Override

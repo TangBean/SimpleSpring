@@ -15,15 +15,9 @@
     </bean>
 
     <bean name="D" class="org.simplespring.model.D">
-        <constructor-arg index="0" type="java.lang.String">
-            <value>D的name属性值</value>
-        </constructor-arg>
-        <constructor-arg index="1" type="java.lang.String">
-            <value>D的value属性值</value>
-        </constructor-arg>
-        <constructor-arg index="2" type="org.simplespring.model.A">
-            <ref>A</ref>
-        </constructor-arg>
+        <constructor-arg index="0" type="java.lang.String" value="D的name属性值"/>
+        <constructor-arg index="1" type="java.lang.String" value="D的value属性值"/>
+        <constructor-arg index="2" type="org.simplespring.model.A" ref="A"/>
         <!--<constructor-arg index="2" type="double">-->
             <!--<value>2.25</value>-->
         <!--</constructor-arg>-->

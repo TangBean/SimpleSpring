@@ -57,21 +57,41 @@ public class ConfigManager {
     }
 
     private static void setBeanConstructorArg(Element bElement, Bean bean) {
-        List<Element> constructorArgs = bElement.elements("constructor-arg");
-        if (constructorArgs != null) {
-            for (Element constructorArg : constructorArgs) {
+        List<Element> elements = bElement.elements("constructor-arg");
+        if (elements != null) {
+            for (Element element : elements) {
                 ConstructorArg constructor = new ConstructorArg();
-                String typeAttr = constructorArg.attributeValue("type");
-                String valueAttr = constructorArg.element("value").getText();
-                String refAttr = constructorArg.element("ref").getText();
-                String indexAttr = constructorArg.attributeValue("index");
+
+                boolean hasValueAttribute = false, hasRefAttribute = false;
+                String valueAttr = element.attributeValue("value");
+                String refAttr = element.attributeValue("ref");
+                if (valueAttr != null) {
+                    hasValueAttribute = true;
+                }
+                if (refAttr != null) {
+                    hasRefAttribute = true;
+                }
+
+                if (hasValueAttribute && hasRefAttribute) {
+                    throw new RuntimeException(bean.getName() +
+                            " is only allowed to contain either 'ref' attribute OR 'value' attribute");
+                }
+
+                if (hasValueAttribute) {
+                    constructor.setValueAttr(valueAttr);
+                }
+                if (hasRefAttribute) {
+                    constructor.setRefAttr(refAttr);
+                }
+
+                String typeAttr = element.attributeValue("type");
+                String indexAttr = element.attributeValue("index");
                 if (indexAttr != null) {
                     try {
                         int index = Integer.parseInt(indexAttr);
                         if (StringUtils.hasLength(typeAttr)) {
                             constructor.setType(typeAttr);
                         }
-                        // todo: 设置 value 和 ref
                         if (bean.getIndexConstructorArgs().containsKey(index)) {
                             throw new RuntimeException("Ambiguous constructor-arg entries for index " + indexAttr);
                         } else {
@@ -85,12 +105,8 @@ public class ConfigManager {
                     if (StringUtils.hasLength(typeAttr)) {
                         constructor.setType(typeAttr);
                     }
-                    // todo: 设置 value 和 ref
                     bean.getGenericConstructorArgs().add(constructor);
                 }
-
-
-
             }
         }
     }

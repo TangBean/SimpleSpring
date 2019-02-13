@@ -1,9 +1,6 @@
 package org.simplespring.config;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Bean {
     private String name;
@@ -28,6 +25,33 @@ public class Bean {
                 ", genericConstructorArgs=" + genericConstructorArgs +
                 ", properties=" + properties +
                 '}';
+    }
+
+    public ConstructorArg getArgumentValue(int paramIndex, Class<?> paramType, Set<ConstructorArg> usedConstructorArg) {
+        if (paramIndex < 0) {
+            throw new RuntimeException("索引不能为负");
+        }
+        ConstructorArg res = null;
+        res = this.indexConstructorArgs.get(paramIndex);
+        if (res == null) {
+            for (ConstructorArg constructorArg : this.genericConstructorArgs) {
+                if (constructorArg.getType().equals(paramType.getCanonicalName())) {
+                    res = constructorArg;
+                    break;
+                }
+            }
+        }
+        return res;
+    }
+
+    public ConstructorArg getGenericArgumentValue(Set<ConstructorArg> usedConstructorArg) {
+        for (ConstructorArg constructorArg : this.genericConstructorArgs) {
+            if (usedConstructorArg != null && usedConstructorArg.contains(constructorArg)) {
+                continue;
+            }
+            return constructorArg;
+        }
+        return null;
     }
 
     public Map<Integer, ConstructorArg> getIndexConstructorArgs() {

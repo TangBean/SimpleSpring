@@ -9,20 +9,36 @@ public class ConstructorArg {
     private int index;
 
     /* constructor-arg 标签的两个子标签 */
-    private String value;
-    private String ref;
+    private String valueAttr;
+    private String refAttr;
+
+    private boolean isConvert;
+    private Object refObj;
 
     public ConstructorArg() {
     }
 
-    @Override
-    public String toString() {
-        return "ConstructorArg{" +
-                "type='" + type + '\'' +
-                ", index=" + index +
-                ", value='" + value + '\'' +
-                ", ref='" + ref + '\'' +
-                '}';
+    public String getValueStr() {
+        if (isConvert) {
+            return valueAttr;
+        }
+        return refAttr;
+    }
+
+    public boolean isConvert() {
+        return isConvert;
+    }
+
+    public void setConvert(boolean convert) {
+        isConvert = convert;
+    }
+
+    public Object getRefObj() {
+        return refObj;
+    }
+
+    public void setRefObj(Object refObj) {
+        this.refObj = refObj;
     }
 
     public String getType() {
@@ -41,19 +57,27 @@ public class ConstructorArg {
         this.index = index;
     }
 
-    public String getValue() {
-        return value;
+    public String getValueAttr() {
+        return valueAttr;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setValueAttr(String valueAttr) {
+        this.valueAttr = valueAttr;
+        isConvert = true;
     }
 
-    public String getRef() {
-        return ref;
+    public String getRefAttr() {
+        return refAttr;
     }
 
-    public void setRef(String ref) {
-        this.ref = ref;
+    public void setRefAttr(String refAttr) {
+        this.refAttr = refAttr;
+        isConvert = false;
     }
+
+    public static class ValueHolder {
+        private String value;
+        private String ref;
+    }
+
 }
