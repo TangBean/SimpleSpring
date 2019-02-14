@@ -141,14 +141,14 @@ BeanUtils.setProperty(user, "password", "admin123");
 
 我们配置了 3 个类：A、B、C，其中 A 和 B 是 singleton 的，也就是说是单例的，只在容器初始化时创建一次，每次调用 getBean 返回的都是同一个对象；C 是多例的，即每次调用 getBean 都返回一个新创建的对象。
 
-我们首先需要考虑的事情是，我们解析出来的 xml 文件的内容应该放在哪里呢？我们采用的解决方案是：创建两个 Model 类：`Bean.java` 和 `Property.java`，专门放解析出来的 `<bean>` 和 `<property>` 标签。然后我们把解析出来的 Bean 类放到一个 `Map<String, Bean>` 中，其中 key 是我们配置的 bean 标签的 name，value 就是对应的 Bean 对象。这部分的实现在 `org.simplespring.config.parse.ConfigManager.java` 中：
+我们首先需要考虑的事情是，我们解析出来的 xml 文件的内容应该放在哪里呢？我们采用的解决方案是：创建 3 个 Model 类：`Bean` 、 `Property` 和 `ConstructorArg`，专门放解析出来的 `<bean>` 、 `<property>` 和 `<constructor-arg>` 标签。然后我们把解析出来的 Bean 类放到一个 `Map<String, Bean>` 中，其中 key 是我们配置的 bean 标签的 name，value 就是对应的 Bean 对象。这部分的实现在 `org.simplespring.config.parse.ConfigManager.java` 中：
 
 - **方法：** `public static Map<String, Bean> getConfig(String path)`
 - **流程：**
 	- 创建解析器：SAXReader
 	- 加载 XML 文件
 	- 定义 xpath 表达式："//bean"，取出所有 Bean
-	- 对 Bean 元素进行遍历
+	- 对 Bean 元素进行遍历，并通过 `setBean` 方法进行解析
 		- 将 `<bean>` 标签的 name & class & scope 属性封装到 Bean 对象中
 		- 获取 `<bean>` 标签下的所有 `<property>` 子标签，将 property 的 name/value/ref 属性封装到 Property 对象中
 		- 将解析出的 Property 对象封装到 Bean 对象中

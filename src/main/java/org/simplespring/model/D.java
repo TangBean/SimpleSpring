@@ -18,6 +18,16 @@ public class D {
         this.doubleAttribute = doubleAttribute;
     }
 
+    public D(A refAttribute, double doubleAttribute) {
+        this.refAttribute = refAttribute;
+        this.doubleAttribute = doubleAttribute;
+    }
+
+    public D(String nameAttribute, String valueAttribute) {
+        this.nameAttribute = nameAttribute;
+        this.valueAttribute = valueAttribute;
+    }
+
     @Override
     public String toString() {
         return "D{" +

@@ -13,7 +13,6 @@ public class ConstructorArg {
     private String refAttr;
 
     private boolean isConvert;
-    private Object refObj;
 
     public ConstructorArg() {
     }
@@ -31,14 +30,6 @@ public class ConstructorArg {
 
     public void setConvert(boolean convert) {
         isConvert = convert;
-    }
-
-    public Object getRefObj() {
-        return refObj;
-    }
-
-    public void setRefObj(Object refObj) {
-        this.refObj = refObj;
     }
 
     public String getType() {
@@ -75,9 +66,14 @@ public class ConstructorArg {
         isConvert = false;
     }
 
-    public static class ValueHolder {
-        private String value;
-        private String ref;
+    @Override
+    public String toString() {
+        return "ConstructorArg{" +
+                "type='" + type + '\'' +
+                ", index=" + index +
+                ", valueAttr='" + valueAttr + '\'' +
+                ", refAttr='" + refAttr + '\'' +
+                ", isConvert=" + isConvert +
+                '}';
     }
-
 }

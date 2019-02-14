@@ -24,6 +24,8 @@ public class ConstructorResolver {
 
             if (paramTypes.length > paramNum) {
                 continue;
+            } else if (paramTypes.length < paramNum) {
+                break;
             }
 
             boolean found = true;

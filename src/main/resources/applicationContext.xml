@@ -15,12 +15,33 @@
     </bean>
 
     <bean name="D" class="org.simplespring.model.D">
-        <constructor-arg index="0" type="java.lang.String" value="D的name属性值"/>
-        <constructor-arg index="1" type="java.lang.String" value="D的value属性值"/>
-        <constructor-arg index="2" type="org.simplespring.model.A" ref="A"/>
-        <!--<constructor-arg index="2" type="double">-->
-            <!--<value>2.25</value>-->
-        <!--</constructor-arg>-->
+        <!--Success tests:-->
+        <!--Test both type and index-->
+        <!--<constructor-arg index="0" type="java.lang.String" value="D的name属性值"/>-->
+        <!--<constructor-arg index="1" type="java.lang.String" value="D的value属性值"/>-->
+        <!--<constructor-arg index="2" type="org.simplespring.model.A" ref="A"/>-->
+        <!--<constructor-arg index="2" type="double" value="2.25"/>-->
+
+        <!--Test only type-->
+        <!--<constructor-arg type="org.simplespring.model.A" ref="A"/>-->
+        <!--<constructor-arg type="double" value="2.25"/>-->
+
+        <!--Test only index-->
+        <constructor-arg index="0" value="D的name属性值"/>
+        <constructor-arg index="1" value="D的value属性值"/>
+        <constructor-arg index="2" ref="A"/>
+
+        <!--Failed tests:-->
+        <!--Test multi-index-->
+        <!--<constructor-arg index="0" value="D的name属性值"/>-->
+        <!--<constructor-arg index="1" value="D的value属性值"/>-->
+        <!--<constructor-arg index="2" ref="A"/>-->
+        <!--<constructor-arg index="2" value="2.25"/>-->
+
+        <!--Test wrong parameter type-->
+        <!--<constructor-arg index="0" value="D的name属性值"/>-->
+        <!--<constructor-arg index="1" value="D的value属性值"/>-->
+        <!--<constructor-arg index="2" ref="B"/>-->
     </bean>
 
 </beans>

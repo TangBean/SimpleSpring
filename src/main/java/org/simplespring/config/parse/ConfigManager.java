@@ -15,12 +15,16 @@ import java.util.List;
 import java.util.Map;
 
 public class ConfigManager {
+
+    /**
+     * 解析配置文件
+     */
     public static Map<String, Bean> getConfig(String path) {
         // 获取配置文件输入流
         InputStream xmlConfigFile = ConfigManager.class.getResourceAsStream(path);
-        // 创建XML文件解析器
+        // 创建 XML 文件解析器
         SAXReader reader = new SAXReader();
-        // 存放需要被配置的Bean的配置信息
+        // 存放需要被配置的 Bean 的配置信息
         Map<String, Bean> configs = new HashMap<>();
         Document doc = null;
         try {
@@ -30,9 +34,9 @@ public class ConfigManager {
             throw new RuntimeException("配置文件有误");
         }
         if (doc != null) {
-            // 获取配置文件中的所有bean标签
+            // 获取配置文件中的所有 bean 标签
             List<Element> beans = doc.selectNodes("//bean");
-            // 根据配置文件中的配置信息构造configs
+            // 根据配置文件中的配置信息构造 configs
             for (Element bElement : beans) {
                 Bean bean = setBean(bElement);
                 configs.put(bean.getName(), bean);
@@ -41,6 +45,9 @@ public class ConfigManager {
         return configs;
     }
 
+    /**
+     * 解析 bean 标签
+     */
     private static Bean setBean(Element bElement) {
         Bean bean = new Bean();
         String bName = bElement.attributeValue("name");
@@ -56,36 +63,19 @@ public class ConfigManager {
         return bean;
     }
 
+    /**
+     * 解析 constructor-arg 标签
+     */
     private static void setBeanConstructorArg(Element bElement, Bean bean) {
         List<Element> elements = bElement.elements("constructor-arg");
         if (elements != null) {
             for (Element element : elements) {
                 ConstructorArg constructor = new ConstructorArg();
-
-                boolean hasValueAttribute = false, hasRefAttribute = false;
-                String valueAttr = element.attributeValue("value");
-                String refAttr = element.attributeValue("ref");
-                if (valueAttr != null) {
-                    hasValueAttribute = true;
-                }
-                if (refAttr != null) {
-                    hasRefAttribute = true;
-                }
-
-                if (hasValueAttribute && hasRefAttribute) {
-                    throw new RuntimeException(bean.getName() +
-                            " is only allowed to contain either 'ref' attribute OR 'value' attribute");
-                }
-
-                if (hasValueAttribute) {
-                    constructor.setValueAttr(valueAttr);
-                }
-                if (hasRefAttribute) {
-                    constructor.setRefAttr(refAttr);
-                }
+                parseValueAndRef(element, bean, constructor);
 
                 String typeAttr = element.attributeValue("type");
                 String indexAttr = element.attributeValue("index");
+                // 优先解析 index 属性，将解析结果放入 bean 的 Map 集合中
                 if (indexAttr != null) {
                     try {
                         int index = Integer.parseInt(indexAttr);
@@ -95,6 +85,7 @@ public class ConfigManager {
                         if (bean.getIndexConstructorArgs().containsKey(index)) {
                             throw new RuntimeException("Ambiguous constructor-arg entries for index " + indexAttr);
                         } else {
+                            constructor.setIndex(index);
                             bean.getIndexConstructorArgs().put(index, constructor);
                         }
                     } catch (NumberFormatException e) {
@@ -102,6 +93,7 @@ public class ConfigManager {
                         throw new RuntimeException("Attribute 'index' of tag 'constructor-arg' must be an integer");
                     }
                 } else {
+                    // 如果没有该标签没有 index 属性，将解析结果放入 bean 的 List 集合中
                     if (StringUtils.hasLength(typeAttr)) {
                         constructor.setType(typeAttr);
                     }
@@ -111,8 +103,36 @@ public class ConfigManager {
         }
     }
 
-    // todo: 写 value 和 ref 的设置函数
+    /**
+     * 解析 value 或 ref 属性值
+     */
+    private static void parseValueAndRef(Element element, Bean bean, ConstructorArg constructor) {
+        boolean hasValueAttribute = false, hasRefAttribute = false;
+        String valueAttr = element.attributeValue("value");
+        String refAttr = element.attributeValue("ref");
+        if (valueAttr != null) {
+            hasValueAttribute = true;
+        }
+        if (refAttr != null) {
+            hasRefAttribute = true;
+        }
 
+        if (hasValueAttribute && hasRefAttribute) {
+            throw new RuntimeException(bean.getName() +
+                    " is only allowed to contain either 'ref' attribute OR 'value' attribute");
+        }
+
+        if (hasValueAttribute) {
+            constructor.setValueAttr(valueAttr);
+        }
+        if (hasRefAttribute) {
+            constructor.setRefAttr(refAttr);
+        }
+    }
+
+    /**
+     * 解析 property 标签
+     */
     private static void setBeanProperties(Element bElement, Bean bean) {
         List<Element> properties = bElement.elements("property");
         if (properties != null) {
@@ -128,6 +148,5 @@ public class ConfigManager {
             }
         }
     }
-
 
 }

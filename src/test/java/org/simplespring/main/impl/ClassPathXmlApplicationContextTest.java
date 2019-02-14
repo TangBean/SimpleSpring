@@ -5,8 +5,7 @@ import org.simplespring.main.BeanFactory;
 import org.simplespring.model.A;
 import org.simplespring.model.B;
 import org.simplespring.model.C;
-
-import static org.junit.Assert.*;
+import org.simplespring.model.D;
 
 public class ClassPathXmlApplicationContextTest {
 
@@ -21,10 +20,13 @@ public class ClassPathXmlApplicationContextTest {
         A a2 = (A) factory.getBean("A");
         C c2 = (C) factory.getBean("C");
 
+        D d1 = (D) factory.getBean("D");
+
         System.out.println(a1);
         System.out.println(b1);
         System.out.println(c1);
         System.out.println(a2);
         System.out.println(c2);
+        System.out.println(d1);
     }
 }
