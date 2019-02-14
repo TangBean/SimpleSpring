@@ -113,7 +113,7 @@ BeanUtils.setProperty(user, "password", "admin123");
 
 代码结构如下：
 
-![程序结构.png](doc/pic/程序结构.png)
+![程序结构.png](doc/pic/程序结构_new.png)
 
 ### 解析配置文件
 
