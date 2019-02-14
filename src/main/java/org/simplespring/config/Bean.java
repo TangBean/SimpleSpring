@@ -9,8 +9,10 @@ public class Bean {
 
     private String scope = "singleton";
 
+    /** 用来存储通过索引定位的构造函数参数 */
     private final Map<Integer, ConstructorArg> indexConstructorArgs = new HashMap<>();
 
+    /** 用来存储不索引定位的构造函数参数 */
     private final List<ConstructorArg> genericConstructorArgs = new ArrayList<>();
 
     private final List<Property> properties = new ArrayList<>();
@@ -27,6 +29,9 @@ public class Bean {
                 '}';
     }
 
+    /**
+     * 获取索引为 paramIndex 的构造函数入参，先尝试通过 index 获取，如果该参数未设置 index 属性，再尝试通过 type 获取
+     */
     public ConstructorArg getArgumentValue(int paramIndex, Class<?> paramType, Set<ConstructorArg> usedConstructorArg) {
         if (paramIndex < 0) {
             throw new RuntimeException("索引不能为负");
@@ -44,6 +49,9 @@ public class Bean {
         return res;
     }
 
+    /**
+     * 获取 genericConstructorArgs 中第一个没有使用的参数
+     */
     public ConstructorArg getGenericArgumentValue(Set<ConstructorArg> usedConstructorArg) {
         for (ConstructorArg constructorArg : this.genericConstructorArgs) {
             if (usedConstructorArg != null && usedConstructorArg.contains(constructorArg)) {

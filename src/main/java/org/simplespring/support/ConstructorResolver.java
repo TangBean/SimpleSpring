@@ -13,11 +13,15 @@ import java.util.Set;
 
 public class ConstructorResolver {
 
+    /**
+     * 搜索匹配的构造函数及其参数
+     */
     public static ArgumentsHolder matchConstructor(Bean beanInfo, Class beanClass, BeanFactory beanFactory) {
         Constructor<?>[] constructors = beanClass.getConstructors();
-        AutowireUtils.sortConstructors(constructors);
+        AutowireUtils.sortConstructors(constructors); // 对构造函数们按照 public 在前，参数个数多的在前的顺序进行排序
         int paramNum = beanInfo.getIndexConstructorArgs().size() + beanInfo.getGenericConstructorArgs().size();
 
+        // 遍历所有的构造函数进行匹配，有匹配成功的则返回
         for (Constructor<?> candidate : constructors) {
             Class<?>[] paramTypes = candidate.getParameterTypes();
             Object[] argsToUse = new Object[paramNum];
@@ -34,7 +38,9 @@ public class ConstructorResolver {
             ConvertUtilsBean converter = new ConvertUtilsBean();
             for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
                 Class<?> paramType = paramTypes[paramIndex];
+                // 先通过 index
                 constructorArg = beanInfo.getArgumentValue(paramIndex, paramType, usedConstructorArg);
+
                 if (constructorArg == null) {
                     constructorArg = beanInfo.getGenericArgumentValue(usedConstructorArg);
                 }

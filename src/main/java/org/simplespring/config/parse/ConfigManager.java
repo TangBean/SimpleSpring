@@ -71,7 +71,7 @@ public class ConfigManager {
         if (elements != null) {
             for (Element element : elements) {
                 ConstructorArg constructor = new ConstructorArg();
-                parseValueAndRef(element, bean, constructor);
+                parseValueAndRefForConstructor(element, bean, constructor);
 
                 String typeAttr = element.attributeValue("type");
                 String indexAttr = element.attributeValue("index");
@@ -93,7 +93,7 @@ public class ConfigManager {
                         throw new RuntimeException("Attribute 'index' of tag 'constructor-arg' must be an integer");
                     }
                 } else {
-                    // 如果没有该标签没有 index 属性，将解析结果放入 bean 的 List 集合中
+                    // 如果该标签没有 index 属性，将解析结果放入 bean 的 List 集合中
                     if (StringUtils.hasLength(typeAttr)) {
                         constructor.setType(typeAttr);
                     }
@@ -104,9 +104,9 @@ public class ConfigManager {
     }
 
     /**
-     * 解析 value 或 ref 属性值
+     * 解析 constructor-arg 的 value 或 ref 属性值
      */
-    private static void parseValueAndRef(Element element, Bean bean, ConstructorArg constructor) {
+    private static void parseValueAndRefForConstructor(Element element, Bean bean, ConstructorArg constructor) {
         boolean hasValueAttribute = false, hasRefAttribute = false;
         String valueAttr = element.attributeValue("value");
         String refAttr = element.attributeValue("ref");
@@ -139,13 +139,37 @@ public class ConfigManager {
             for (Element pElement : properties) {
                 Property property = new Property();
                 String pName = pElement.attributeValue("name");
-                String pValue = pElement.attributeValue("value");
-                String pRef = pElement.attributeValue("ref");
                 property.setName(pName);
-                property.setValue(pValue);
-                property.setRef(pRef);
+                parseValueAndRefForProperty(pElement, bean, property);
                 bean.getProperties().add(property);
             }
+        }
+    }
+
+    /**
+     * 解析 property 的 value 或 ref 属性值
+     */
+    private static void parseValueAndRefForProperty(Element element, Bean bean, Property property) {
+        boolean hasValueAttribute = false, hasRefAttribute = false;
+        String valueAttr = element.attributeValue("value");
+        String refAttr = element.attributeValue("ref");
+        if (valueAttr != null) {
+            hasValueAttribute = true;
+        }
+        if (refAttr != null) {
+            hasRefAttribute = true;
+        }
+
+        if (hasValueAttribute && hasRefAttribute) {
+            throw new RuntimeException(bean.getName() +
+                    " is only allowed to contain either 'ref' attribute OR 'value' attribute");
+        }
+
+        if (hasValueAttribute) {
+            property.setValue(valueAttr);
+        }
+        if (hasRefAttribute) {
+            property.setRef(refAttr);
         }
     }
 

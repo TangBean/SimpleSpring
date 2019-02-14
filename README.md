@@ -122,7 +122,6 @@ BeanUtils.setProperty(user, "password", "admin123");
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <beans>
-
     <bean name="A" class="org.simplespring.model.A">
         <property name="strData" value="A的strData"/>
         <property name="intData" value="123"/>
@@ -136,6 +135,11 @@ BeanUtils.setProperty(user, "password", "admin123");
         <property name="strData" value="C的strData"/>
     </bean>
     
+    <bean name="D" class="org.simplespring.model.D">
+        <constructor-arg index="0" type="java.lang.String" value="D的name属性值"/>
+        <constructor-arg index="1" type="java.lang.String" value="D的value属性值"/>
+        <constructor-arg index="2" type="org.simplespring.model.A" ref="A"/>
+    </bean>
 </beans>
 ```
 
@@ -145,15 +149,29 @@ BeanUtils.setProperty(user, "password", "admin123");
 
 - **方法：** `public static Map<String, Bean> getConfig(String path)`
 - **流程：**
-	- 创建解析器：SAXReader
-	- 加载 XML 文件
-	- 定义 xpath 表达式："//bean"，取出所有 Bean
-	- 对 Bean 元素进行遍历，并通过 `setBean` 方法进行解析
-		- 将 `<bean>` 标签的 name & class & scope 属性封装到 Bean 对象中
-		- 获取 `<bean>` 标签下的所有 `<property>` 子标签，将 property 的 name/value/ref 属性封装到 Property 对象中
-		- 将解析出的 Property 对象封装到 Bean 对象中
-		- 将 Bean 对象封装到 Map res 中（这个 Map 就是我们的返回结果）
-	- 返回 Map res
+  - 创建解析器：SAXReader
+  - 加载 XML 文件
+  - 定义 xpath 表达式：`"//bean"`，取出所有 Bean
+  - 对 Bean 元素进行遍历，并通过 `setBean` 方法进行解析
+    - 将 `<bean>` 标签的 name & class & scope 属性封装到 Bean 对象中
+    - 调用 `setBeanConstructorArg(Element bElement, Bean bean)` 方法，解析 `<constructor-arg>` 标签
+    - 调用 `setBeanProperties(Element bElement, Bean bean)` 方法，解析 `<property>` 标签
+    - 将 Bean 对象封装到 Map res 中（这个 Map 就是我们的返回结果）
+  - 返回 Map res
+
+`<property>` 标签的解析较为简单，而 `<constructor-arg>` 标签的解析却不是那么的容易，因为如果像 `<property>` 标签一样，在 Bean 中仅仅通过一个 `List<Property>` 来存储的话，我们之后将很难通过配置文件给出的配置信息来确定到底应该执行哪一个构造函数来创建对象。因此，为了方便后面构造函数匹配的实现，我们在 Bean 中通过以下结构来存储 `<constructor-arg>` 标签的信息：
+
+```java
+/** 用来存储通过索引定位的构造函数参数 */
+private final Map<Integer, ConstructorArg> indexConstructorArgs = new HashMap<>();
+
+/** 用来存储不索引定位的构造函数参数 */
+private final List<ConstructorArg> genericConstructorArgs = new ArrayList<>();
+```
+
+因此，在解析 `<constructor-arg>` 标签时，优先解析 index 属性，将解析结果放入 Bean 的 `Map<Integer, ConstructorArg> indexConstructorArgs` 集合中，如果该标签没有 index 属性，则将解析结果放入 Bean 的 `List<ConstructorArg> genericConstructorArgs` 集合中。
+
+具体实现详见：[ConfigManager.java](./src/main/java/org/simplespring/config/parse/ConfigManager.java).
 
 ### 根据配置文件解析结果初始化容器
 
@@ -180,15 +198,43 @@ public interface BeanFactory {
 
 - **方法：** `private Object createBean(Bean beanInfo)`
 - **流程：**
-	- 获取要创建的 Bean 的 Class
-	- 获取 Bean 需要的属性对象，将其注入到Bean中
-	  - value 属性注入：`prop.getValue() != null`
-	  	- `BeanUtils.setProperty(object, property.getName(), property.getValue())`
-	  - ref 属性注入：`prop.getRef() != null`
-	  	- 先来判断一下要加载的 ref 类是否已经创建并放入容器中了
-	  		- 不存在：递归调用 createBean 方法
-	  		- 存在：直接从容器中取出并注入
-	- 返回创建好的 object
+  - 判断容器中是否已经存在该实例，如果存在，直接返回即可
+  - 获取要创建的 Bean 的 Class，调用 `newObject(Bean beanInfo, Class beanClass)` 方法创建对象
+  - 获取 Bean 需要的属性对象，将其注入到Bean中
+    - value 属性注入：`prop.getValue() != null`
+    	- `BeanUtils.setProperty(object, property.getName(), property.getValue())`
+    - ref 属性注入：`prop.getRef() != null`
+    	- 先来判断一下要加载的 ref 类是否已经创建并放入容器中了
+    		- 不存在：递归调用 createBean 方法
+    		- 存在：直接从容器中取出并注入
+  - 返回创建好的 object
+
+在创建对象时，我们调用了 `newObject(Bean beanInfo, Class beanClass)` 方法，在没有配置 constructor-arg 时，Spring 容器会选择使用无参构造函数创建对象，及直接调用 `beanClass.newInstance()` 方法完成对象的创建。但是当配置文件中配置了 constructor-arg 时，容器就需要通过配置文件中 `<constructor-arg>` 标签的 type 和 index 属性的配置来选择合适的构造函数创建实例了，具体的匹配方法将会在 ConstructorResolver.matchConstructor 方法的实现流程中进行详细说明，我们首先来看一下 newObject 方法的实现，以下是 newObject 方法的详细实现流程：
+
+- **方法：** `public Object newObject(Bean beanInfo, Class beanClass)`
+- **流程：**
+	- 如果 beanInfo 中没有 constructor-arg 的配置信息，直接调用 `beanClass.newInstance()` 创建对象返回
+	- 调用 `ConstructorResolver.matchConstructor(Bean beanInfo, Class beanClass, BeanFactory beanFactory)` 方法搜索匹配的构造函数及其参数列表
+	- 如果能搜索到，则通过反射调用构造函数创建对象，如果无法搜索到则抛出异常
+
+createBean 和 newObject 方法的具体实现详见：[ClassPathXmlApplicationContext.java](./src/main/java/org/simplespring/main/impl/ClassPathXmlApplicationContext.java).
+
+`ConstructorResolver.matchConstructor(Bean beanInfo, Class beanClass, BeanFactory beanFactory)` 方法的详细实现流程：
+
+- **方法：** `public static ArgumentsHolder matchConstructor(Bean beanInfo, Class beanClass, BeanFactory beanFactory)`
+- **流程：**
+	- 从 beanClass 中取出该类所有的构造函数，并对构造函数们按照 public 在前，参数个数多的在前的顺序进行排序，以方便后面的匹配操作
+	- 遍历所有的构造函数，并将每个构造函数的参数数组与配置文件中配置的参数进行匹配
+		- 首先按照构造函数的入参个数进行匹配
+		- 匹配到入参个数相同的构造函数时，根据 beanInfo 中读取的构造函数参数配置信息，生成对应于当前构造函数的参数列表，生成的过程对参数的类型进行匹配，只有每个位置的参数都符合配置文件中配置的构造函数才能作为匹配结果返回，在遍历参数列表过程中：
+			- 先获取配置文件中配置在该 index 下的参数
+			- 如果当前位置未设置参数，就按照类型搜索参数
+			- 如果按照类型也搜索不到就获取 `beanInfo.genericConstructorArgs` 中第一个没有使用的参数作为该位置的参数
+			- 获得当前位置的参数后，对类型匹配判断，如果类型与当前正在匹配的构造函数相应位置的入参相同，则匹配成功，可以继续匹配下一个参数，如果类型匹配不成功，则当前构造函数匹配失败，跳过该构造函数，继续匹配下一个构造函数
+
+ConstructorResolver 类的具体实现详见：[ConstructorResolver.java](./src/main/java/org/simplespring/support/ConstructorResolver.java).
+
+通过以上复杂的构造函数匹配流程，我们也可以理解为什么一般建议使用 set/get 方法的方式注入属性了，因为构造函数注入属性的方式除了存在循环依赖的问题，在容器初始化的时候，由于需要匹配合适的构造函数，会增加容器的初始化时间。
 
 ### getBean 返回所需对象
 
@@ -214,11 +260,14 @@ C c1 = (C) factory.getBean("C");
 A a2 = (A) factory.getBean("A");
 C c2 = (C) factory.getBean("C");
 
+D d1 = (D) factory.getBean("D");
+
 System.out.println(a1);
 System.out.println(b1);
 System.out.println(c1);
 System.out.println(a2);
 System.out.println(c2);
+System.out.println(d1);
 ```
 
 输出结果：
@@ -233,6 +282,7 @@ B{refData=A{strData='A的strData', intData=123}}
 C{strData='C的strData'}
 A{strData='A的strData', intData=123}
 C{strData='C的strData'}
+D{nameAttribute='D的name属性值', valueAttribute='D的value属性值', refAttribute=A{strData='A的strData', intData=123}, doubleAttribute=0.0}
 ```
 
 我们创建了 2 个 A 和 C 对象，一个 B 对象，通过观察输出结果可以发现，A 对象只会被创建一次，而 C 对象被创建了两次（根据构造函数的执行次数判断的，ABC 每个类的构造函数都会 print "创建X对象一次"），并且我们在配置文件中配置的属性也被注入进了相应的对象，A 对象中的 int 型和 String 型数据都被很好的注入了。至此，简单的 Spring IoC 框架实现完毕。
