@@ -6,11 +6,10 @@ import org.simplespring.model.Person;
 
 /**
  * @program: SimpleSpring
- * @description: ������
+ * @description: 配置类
  * @author: cuzz
  * @create: 2019-03-04 00:09
  **/
-
 @Configuration
 public class MainConfig {
 
