@@ -2,6 +2,7 @@ package org.simplespring.main.impl;
 
 
 import org.simplespring.annotation.Bean;
+import org.simplespring.annotation.ComponentScan;
 import org.simplespring.annotation.Configuration;
 import org.simplespring.main.BeanFactory;
 
@@ -19,7 +20,6 @@ import java.util.Map;
  * @author: cuzz
  * @create: 2019-03-03 23:46
  **/
-
 public class AnnotationConfigApplicationContext implements BeanFactory {
 
     // ioc 容器
@@ -27,10 +27,19 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
     // 扫描的类
     private List<String> classNames = new ArrayList<>();
 
-    public AnnotationConfigApplicationContext(Class<?> clazz){
-        doScanner("org.simplespring");
+    private Class<?> configClazz;
+
+    public AnnotationConfigApplicationContext(Class<?> configClazz){
+        this.configClazz = configClazz;
+        String[] packageNames = this.getPackageName(configClazz);
+        for (String packageName : packageNames) {
+            doScanner(packageName);
+        }
         doInstance();
     }
+
+
+
     @Override
     public Object getBean(String beanName) {
         for (Map.Entry<String, Object> entry : ioc.entrySet()) {
@@ -110,5 +119,17 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
         return new String(chars);
     }
 
+    /**
+     * 获取包名字符串数组
+     * @param configClazz
+     * @return
+     */
+    private String[] getPackageName(Class<?> configClazz) {
+        if (configClazz.isAnnotationPresent(ComponentScan.class)) {
+            ComponentScan componentScan = configClazz.getAnnotation(ComponentScan.class);
+            return componentScan.value();
+        }
+        return new String[]{};
+    }
 
 }

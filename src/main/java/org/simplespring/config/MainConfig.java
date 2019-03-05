@@ -1,6 +1,7 @@
 package org.simplespring.config;
 
 import org.simplespring.annotation.Bean;
+import org.simplespring.annotation.ComponentScan;
 import org.simplespring.annotation.Configuration;
 import org.simplespring.model.Person;
 
@@ -11,6 +12,7 @@ import org.simplespring.model.Person;
  * @create: 2019-03-04 00:09
  **/
 @Configuration
+@ComponentScan("org.simplespring")
 public class MainConfig {
 
     @Bean

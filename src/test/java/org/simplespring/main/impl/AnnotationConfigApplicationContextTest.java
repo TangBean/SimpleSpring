@@ -10,7 +10,6 @@ import org.simplespring.model.Person;
  * @author: cuzz
  * @create: 2019-03-03 23:59
  **/
-
 public class AnnotationConfigApplicationContextTest {
 
     @Test

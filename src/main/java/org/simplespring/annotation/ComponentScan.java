@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Configuration {
-    String value() default "";
+public @interface ComponentScan {
+    String[] value() default {};
 }
