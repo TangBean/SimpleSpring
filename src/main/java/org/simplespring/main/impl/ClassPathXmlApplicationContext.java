@@ -9,21 +9,22 @@ import org.simplespring.support.ConstructorResolver;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassPathXmlApplicationContext implements BeanFactory {
     /** Bean 的配置信息 */
     private Map<String, Bean> configs;
     /** Bean 的容器，存放初始化好的 singleton bean */
-    private Map<String, Object> beanMap = new HashMap<>();
+    private Map<String, Object> beanMap = new ConcurrentHashMap<>();
 
     public ClassPathXmlApplicationContext(String path) {
         configs = ConfigManager.getConfig(path);
         if (configs != null) {
             for (Bean beanInfo : configs.values()) {
-                if (!beanInfo.getScope().equals("prototype")) { // 多例 bean 不初始化
+                // 多例 bean 不初始化，容器缓存中已经存在也不用初始化
+                if (!beanInfo.getScope().equals("prototype") && !beanMap.containsKey(beanInfo.getName())) {
                     Object object = createBean(beanInfo);
                     beanMap.put(beanInfo.getName(), object);
                 }
@@ -33,12 +34,6 @@ public class ClassPathXmlApplicationContext implements BeanFactory {
 
     private Object createBean(Bean beanInfo) {
         Object object = null;
-        // 判断容器中是否已经存在该实例
-        object = beanMap.get(beanInfo.getName());
-        if (object != null) {
-            return object;
-        }
-
         try {
             Class beanClass = Class.forName(beanInfo.getClassName());
             // 创建对象
