@@ -191,6 +191,7 @@ public interface BeanFactory {
 
 - 读取配置文件中需要初始化的 Bean 信息： `ConfigManager.getConfig()`
 - 遍历配置对象 Map，初始化所有不是 prototype 的 Bean
+    - 先判断 Bean 是否已存在于容器的缓存中，如果存在，直接跳过该 Bean（可能在给它前面的 Bean 注入属性时将这个 Bean 给初始化好了）
 	- 通过方法 `Object object = createBean(beanInfo);` 完成
 	- 将初始化好的 Bean 放入 `Map<String, Object> beanMap` 中
 
@@ -198,7 +199,6 @@ public interface BeanFactory {
 
 - **方法：** `private Object createBean(Bean beanInfo)`
 - **流程：**
-  - 判断容器中是否已经存在该实例，如果存在，直接返回即可
   - 获取要创建的 Bean 的 Class，调用 `newObject(Bean beanInfo, Class beanClass)` 方法创建对象
   - 获取 Bean 需要的属性对象，将其注入到Bean中
     - value 属性注入：`prop.getValue() != null`
