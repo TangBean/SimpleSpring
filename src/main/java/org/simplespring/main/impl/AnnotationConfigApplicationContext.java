@@ -33,11 +33,11 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
         for (String packageName : packageNames) {
             doScanner(packageName);
         }
+        // 实例化
         doInstance();
+        // 自动注入
         doAutowired();
     }
-
-
 
     @Override
     public Object getBean(String beanName) {
@@ -57,9 +57,6 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
         }
         return null;
     }
-
-
-
 
     private void doScanner(String packageName) {
         File classDir = new File(this.getClass().getResource("/" + packageName.replaceAll("\\.", "/")).getPath());
@@ -138,7 +135,6 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
         }
     }
 
-
     private void doAutowired() {
         if (ioc.isEmpty()) {
             return;
@@ -165,12 +161,10 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
                         e.printStackTrace();
                     }
                 }
-
-
             }
-
         }
     }
+
     private String lowerFirstString(String simpleName) {
         char[] chars = simpleName.toCharArray();
         chars[0] += 32;
@@ -179,6 +173,7 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
 
     /**
      * 获取包名字符串数组
+     *
      * @param configClazz
      * @return
      */
