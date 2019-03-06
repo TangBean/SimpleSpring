@@ -31,5 +31,4 @@ public class MainConfig {
     public Factory factory() {
         return new Factory();
     }
-
 }
