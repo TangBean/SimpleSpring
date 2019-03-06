@@ -9,5 +9,8 @@
         <module name="SimpleSpring" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="SimpleSpring" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
