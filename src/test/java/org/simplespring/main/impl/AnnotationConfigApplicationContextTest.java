@@ -2,6 +2,8 @@ package org.simplespring.main.impl;
 
 import org.junit.Test;
 import org.simplespring.config.MainConfig;
+import org.simplespring.model.Factory;
+import org.simplespring.model.Machine;
 import org.simplespring.model.Person;
 
 /**
@@ -20,5 +22,11 @@ public class AnnotationConfigApplicationContextTest {
         Person person1 = (Person) context.getBean("person");
         System.out.println(person1);
         System.out.println(person == person1);
+
+        Machine machine = (Machine) context.getBean(Machine.class);
+        System.out.println(machine);
+
+        Factory factory = (Factory) context.getBean(Factory.class);
+        System.out.println(factory);
     }
 }

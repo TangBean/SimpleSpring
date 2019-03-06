@@ -1,17 +1,15 @@
 package org.simplespring.main.impl;
 
 
-import org.simplespring.annotation.Bean;
-import org.simplespring.annotation.ComponentScan;
-import org.simplespring.annotation.Configuration;
+import lombok.val;
+import org.simplespring.annotation.*;
 import org.simplespring.main.BeanFactory;
 
 import java.io.File;
+import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -23,19 +21,20 @@ import java.util.Map;
 public class AnnotationConfigApplicationContext implements BeanFactory {
 
     // ioc 容器
-    private Map<String, Object> ioc = new HashMap<>();
+    private Map<String, Object> ioc = new LinkedHashMap<>();
     // 扫描的类
     private List<String> classNames = new ArrayList<>();
 
     private Class<?> configClazz;
 
-    public AnnotationConfigApplicationContext(Class<?> configClazz){
+    public AnnotationConfigApplicationContext(Class<?> configClazz) {
         this.configClazz = configClazz;
         String[] packageNames = this.getPackageName(configClazz);
         for (String packageName : packageNames) {
             doScanner(packageName);
         }
         doInstance();
+        doAutowired();
     }
 
 
@@ -102,6 +101,8 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
                         if (method.isAnnotationPresent(Bean.class)) {
                             Object bean = method.invoke(obj);
                             String beanName = method.getName();
+                            // 注入@value中的属性
+                            injectVal(bean);
                             ioc.put(beanName, bean);
                         }
                     }
@@ -113,6 +114,63 @@ public class AnnotationConfigApplicationContext implements BeanFactory {
         }
     }
 
+    private void injectVal(Object bean) {
+        Field[] fields = bean.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Value.class)) {
+
+                Value value = field.getAnnotation(Value.class);
+                String strVal = value.value().trim();
+                String typeString = field.getGenericType().toString();
+                field.setAccessible(true);
+                try {
+                    if (typeString.endsWith("int") || typeString.endsWith("Integer")) {
+                        int intVal = Integer.parseInt(strVal);
+                        field.set(bean, intVal);
+                    } else if (typeString.endsWith("String")) {
+                        field.set(bean, strVal);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+    }
+
+
+    private void doAutowired() {
+        if (ioc.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : ioc.entrySet()) {
+            // 暴力反射 private也能拿到
+            Field[] fields = entry.getValue().getClass().getDeclaredFields();
+            for (Field field : fields) {
+                if (field.isAnnotationPresent(Autowired.class)) {
+                    Autowired autowired = field.getAnnotation(Autowired.class);
+                    String beanName = autowired.value().trim();
+                    // 是一个接口
+                    if ("".equals(beanName)) {
+                        String str = field.getType().getName(); // org.simplespring.Person
+                        String simpleName = str.substring(str.lastIndexOf(".") + 1); // Person
+                        beanName = lowerFirstString(simpleName); // person
+                    }
+
+                    // 私有的话 强制访问
+                    field.setAccessible(true);
+                    try {
+                        field.set(entry.getValue(), ioc.get(beanName));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+            }
+
+        }
+    }
     private String lowerFirstString(String simpleName) {
         char[] chars = simpleName.toCharArray();
         chars[0] += 32;
